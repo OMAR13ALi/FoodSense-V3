@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo install:*)",
+      "Bash(npx expo --version)",
+      "Bash(npm install:*)",
+      "Bash(nul)",
+      "WebSearch",
+      "Bash(npx tsc:*)",
+      "Bash(dir:*)",
+      "WebFetch(domain:docs.perplexity.ai)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
