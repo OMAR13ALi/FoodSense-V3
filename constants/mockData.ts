@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
 // Sample meal entries for initial state
 export const SAMPLE_MEALS: MealEntry[] = [
   {
-    id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440001',
     text: 'Chicken breast with rice and vegetables',
     calories: 520,
     protein: 45,
@@ -27,7 +27,7 @@ export const SAMPLE_MEALS: MealEntry[] = [
     timestamp: new Date(new Date().setHours(12, 30, 0, 0)),
   },
   {
-    id: '2',
+    id: '550e8400-e29b-41d4-a716-446655440002',
     text: 'Greek yogurt with berries and granola',
     calories: 280,
     protein: 18,
@@ -36,7 +36,7 @@ export const SAMPLE_MEALS: MealEntry[] = [
     timestamp: new Date(new Date().setHours(8, 15, 0, 0)),
   },
   {
-    id: '3',
+    id: '550e8400-e29b-41d4-a716-446655440003',
     text: 'Salmon salad with olive oil dressing',
     calories: 450,
     protein: 35,

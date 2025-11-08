@@ -19,12 +19,16 @@ interface EnvConfig {
     model: string;
     baseURL: string;
   };
+  supabase: {
+    url: string;
+    anonKey: string;
+  };
   debugMode: boolean;
 }
 
 // TEMPORARY: Hardcode API keys for testing
-// const TEMP_OPENROUTER_KEY = 'api-key';
-// const TEMP_PERPLEXITY_KEY = 'model-key';
+ const TEMP_OPENROUTER_KEY = 'api-key';
+const TEMP_PERPLEXITY_KEY = 'model-key';
 
 
 // Get environment variables from expo-constants
@@ -63,6 +67,11 @@ const config: EnvConfig = {
     apiKey: getEnvVar('perplexityApiKey'),
     model: 'sonar-pro',
     baseURL: 'https://api.perplexity.ai',
+  },
+
+  supabase: {
+    url: getEnvVar('supabaseUrl'),
+    anonKey: getEnvVar('supabaseAnonKey'),
   },
 
   debugMode: true,

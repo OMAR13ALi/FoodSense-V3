@@ -51,6 +51,8 @@ export default {
     extra: {
       openRouterApiKey: process.env.OPENROUTER_API_KEY,
       perplexityApiKey: process.env.PERPLEXITY_API_KEY,
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     },
   },
 };

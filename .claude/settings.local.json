@@ -9,9 +9,14 @@
       "Bash(npx tsc:*)",
       "Bash(dir:*)",
       "WebFetch(domain:docs.perplexity.ai)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }

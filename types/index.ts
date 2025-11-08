@@ -4,7 +4,7 @@
 
 // Meal entry interface
 export interface MealEntry {
-  id: string;
+  id: string; // UUID v4 format - matches database schema
   text: string;
   calories: number;
   protein?: number;

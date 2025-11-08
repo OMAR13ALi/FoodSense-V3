@@ -2,9 +2,10 @@
  * Summary Screen - Daily summary with circular progress and macro breakdown
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS, MACRO_EMOJIS } from '@/constants/mockData';
@@ -16,7 +17,21 @@ export default function SummaryScreen() {
   const colorScheme = useColorScheme();
   const colors = COLORS[colorScheme ?? 'light'];
 
-  const { state } = useApp();
+  const { state, isLoading, error, clearError } = useApp();
+
+  // Show toast notification when error occurs
+  useEffect(() => {
+    if (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error,
+        position: 'top',
+        visibilityTime: 3000,
+        onHide: clearError,
+      });
+    }
+  }, [error, clearError]);
 
   // Calculate macro percentages
   const proteinPercentage = state.settings.targetProtein > 0
@@ -64,7 +79,16 @@ export default function SummaryScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header with Settings Button */}
         <View style={styles.headerRow}>
-          <Text style={[styles.header, { color: colors.text }]}>Daily Summary</Text>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.header, { color: colors.text }]}>Daily Summary</Text>
+            {isLoading && (
+              <ActivityIndicator
+                size="small"
+                color={colors.textSecondary}
+                style={styles.loadingIndicator}
+              />
+            )}
+          </View>
           <CircularSettingsButton />
         </View>
 
@@ -190,10 +214,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   header: {
     fontSize: 28,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  loadingIndicator: {
+    marginLeft: 4,
   },
   date: {
     fontSize: 14,

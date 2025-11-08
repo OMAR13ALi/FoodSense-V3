@@ -6,6 +6,7 @@ import React, { createContext, useContext, useReducer, useMemo, ReactNode, useEf
 import { AppState, AppAction, MealEntry, UserSettings } from '@/types';
 import { DEFAULT_SETTINGS } from '@/constants/mockData';
 import * as StorageService from '@/services/storage-service';
+import { generateUUID } from '@/services/device-id-service';
 
 // Calculate totals from meals
 const calculateTotals = (meals: MealEntry[]) => {
@@ -105,6 +106,9 @@ interface AppContextType {
   updateSettings: (settings: Partial<UserSettings>) => void;
   clearMeals: () => void;
   getRemainingCalories: () => number;
+  isLoading: boolean;
+  error: string | null;
+  clearError: () => void;
 }
 
 // Create context
@@ -114,10 +118,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isInitialized, setIsInitialized] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Load data from AsyncStorage on mount
+  // Load data from Supabase on mount
   useEffect(() => {
     const loadInitialData = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
         // Load meals for today
         const meals = await StorageService.loadMeals(new Date());
@@ -137,29 +146,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
 
         setIsInitialized(true);
-      } catch (error) {
+        setIsLoading(false);
+      } catch (error: any) {
         console.error('Error loading initial data:', error);
+        setError(error?.message || 'Failed to load data from cloud');
         setIsInitialized(true);
+        setIsLoading(false);
       }
     };
 
     loadInitialData();
   }, []);
 
-  // Save meals to AsyncStorage whenever they change
+  // Save meals to Supabase whenever they change (debounced)
   useEffect(() => {
     if (isInitialized && state.meals.length >= 0) {
-      StorageService.saveMeals(state.meals, new Date()).catch(error => {
+      StorageService.saveMeals(state.meals, new Date()).catch((error: any) => {
         console.error('Error saving meals:', error);
+        setError(error?.message || 'Failed to save meals to cloud');
       });
     }
   }, [state.meals, isInitialized]);
 
-  // Save settings to AsyncStorage whenever they change
+  // Save settings to Supabase whenever they change (debounced)
   useEffect(() => {
     if (isInitialized) {
-      StorageService.saveSettings(state.settings).catch(error => {
+      StorageService.saveSettings(state.settings).catch((error: any) => {
         console.error('Error saving settings:', error);
+        setError(error?.message || 'Failed to save settings to cloud');
       });
     }
   }, [state.settings, isInitialized]);
@@ -168,7 +182,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addMeal = (meal: Omit<MealEntry, 'id' | 'timestamp'>) => {
     const newMeal: MealEntry = {
       ...meal,
-      id: Date.now().toString(),
+      id: generateUUID(),
       timestamp: new Date(),
     };
     dispatch({ type: 'ADD_MEAL', payload: newMeal });
@@ -195,6 +209,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return state.settings.dailyCalorieGoal - state.totalCalories;
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   const contextValue = useMemo(
     () => ({
       state,
@@ -205,8 +223,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateSettings,
       clearMeals,
       getRemainingCalories,
+      isLoading,
+      error,
+      clearError,
     }),
-    [state]
+    [state, isLoading, error]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

@@ -12,9 +12,11 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS } from '@/constants/mockData';
@@ -44,13 +46,27 @@ export default function DashboardScreen() {
   const colors = COLORS[colorScheme ?? 'light'];
   const router = useRouter();
 
-  const { state, addMeal, updateMeal } = useApp();
+  const { state, addMeal, updateMeal, isLoading, error, clearError } = useApp();
   const [text, setText] = useState('');
   const [lineCalories, setLineCalories] = useState<LineCalories>({});
   const [selectedMeal, setSelectedMeal] = useState<MealEntry | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const debounceTimerRef = useRef<{ [key: number]: ReturnType<typeof setTimeout> }>({});
   const textInputRef = useRef<TextInput>(null);
+
+  // Show toast notification when error occurs
+  useEffect(() => {
+    if (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error,
+        position: 'top',
+        visibilityTime: 3000,
+        onHide: clearError,
+      });
+    }
+  }, [error, clearError]);
 
   // Parse text into lines
   const lines = text.split('\n');
@@ -268,7 +284,16 @@ export default function DashboardScreen() {
       >
         {/* Top Bar */}
         <View style={styles.topBar}>
-          <Text style={[styles.todayText, { color: colors.text }]}>Today</Text>
+          <View style={styles.topBarLeft}>
+            <Text style={[styles.todayText, { color: colors.text }]}>Today</Text>
+            {isLoading && (
+              <ActivityIndicator
+                size="small"
+                color={colors.textSecondary}
+                style={styles.loadingIndicator}
+              />
+            )}
+          </View>
           <CircularSettingsButton />
         </View>
 
@@ -372,10 +397,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   todayText: {
     fontSize: 28,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  loadingIndicator: {
+    marginLeft: 4,
   },
   scrollContainer: {
     flex: 1,

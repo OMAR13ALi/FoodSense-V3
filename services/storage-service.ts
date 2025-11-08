@@ -1,17 +1,17 @@
 /**
- * Storage Service - AsyncStorage persistence
- * Handles saving and loading app data to/from local storage
+ * Storage Service - Supabase Cloud Database
+ * Handles saving and loading app data to/from Supabase with debouncing
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MealEntry, UserSettings } from '@/types';
+import * as DatabaseService from './database-service';
 
-// Storage keys
-const STORAGE_KEYS = {
-  MEALS_PREFIX: 'meals_', // meals_YYYY-MM-DD
-  USER_SETTINGS: 'user_settings',
-  LAST_SYNC: 'last_sync_date',
-} as const;
+// Debounce timers
+let saveMealsTimer: NodeJS.Timeout | null = null;
+let saveSettingsTimer: NodeJS.Timeout | null = null;
+
+// Debounce delay in milliseconds
+const DEBOUNCE_DELAY = 2000; // 2 seconds
 
 /**
  * Format date to YYYY-MM-DD string
@@ -24,32 +24,45 @@ export function formatDateKey(date: Date): string {
 }
 
 /**
- * Get storage key for meals on a specific date
+ * Save meals for a specific date (debounced)
+ * This function debounces saves to prevent excessive network requests
  */
-function getMealsKey(date: Date): string {
-  return `${STORAGE_KEYS.MEALS_PREFIX}${formatDateKey(date)}`;
+export async function saveMeals(meals: MealEntry[], date: Date = new Date()): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Clear existing timer
+    if (saveMealsTimer) {
+      clearTimeout(saveMealsTimer);
+    }
+
+    // Set new timer
+    saveMealsTimer = setTimeout(async () => {
+      try {
+        await DatabaseService.saveMeals(meals, date);
+        resolve();
+      } catch (error) {
+        console.error('Error saving meals:', error);
+        reject(error);
+      }
+    }, DEBOUNCE_DELAY);
+  });
 }
 
 /**
- * Save meals for a specific date
+ * Save meals immediately (bypass debounce)
+ * Use this when you need to force an immediate save
  */
-export async function saveMeals(meals: MealEntry[], date: Date = new Date()): Promise<void> {
+export async function saveMealsImmediate(meals: MealEntry[], date: Date = new Date()): Promise<void> {
+  // Clear any pending debounced save
+  if (saveMealsTimer) {
+    clearTimeout(saveMealsTimer);
+    saveMealsTimer = null;
+  }
+
   try {
-    const key = getMealsKey(date);
-
-    // Convert Date objects to ISO strings for JSON serialization
-    const serializedMeals = meals.map(meal => ({
-      ...meal,
-      timestamp: meal.timestamp.toISOString(),
-    }));
-
-    await AsyncStorage.setItem(key, JSON.stringify(serializedMeals));
-
-    // Update last sync date
-    await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+    await DatabaseService.saveMeals(meals, date);
   } catch (error) {
-    console.error('Error saving meals:', error);
-    throw new Error('Failed to save meals to storage');
+    console.error('Error saving meals immediately:', error);
+    throw error;
   }
 }
 
@@ -58,23 +71,10 @@ export async function saveMeals(meals: MealEntry[], date: Date = new Date()): Pr
  */
 export async function loadMeals(date: Date = new Date()): Promise<MealEntry[]> {
   try {
-    const key = getMealsKey(date);
-    const data = await AsyncStorage.getItem(key);
-
-    if (!data) {
-      return [];
-    }
-
-    const parsed = JSON.parse(data);
-
-    // Convert ISO strings back to Date objects
-    return parsed.map((meal: any) => ({
-      ...meal,
-      timestamp: new Date(meal.timestamp),
-    }));
+    return await DatabaseService.loadMeals(date);
   } catch (error) {
     console.error('Error loading meals:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -83,11 +83,10 @@ export async function loadMeals(date: Date = new Date()): Promise<MealEntry[]> {
  */
 export async function deleteMeals(date: Date = new Date()): Promise<void> {
   try {
-    const key = getMealsKey(date);
-    await AsyncStorage.removeItem(key);
+    await DatabaseService.deleteMeals(date);
   } catch (error) {
     console.error('Error deleting meals:', error);
-    throw new Error('Failed to delete meals from storage');
+    throw error;
   }
 }
 
@@ -96,31 +95,53 @@ export async function deleteMeals(date: Date = new Date()): Promise<void> {
  */
 export async function getAllMealDates(): Promise<string[]> {
   try {
-    const keys = await AsyncStorage.getAllKeys();
-    const mealKeys = keys.filter(key => key.startsWith(STORAGE_KEYS.MEALS_PREFIX));
-
-    return mealKeys
-      .map(key => key.replace(STORAGE_KEYS.MEALS_PREFIX, ''))
-      .sort()
-      .reverse(); // Most recent first
+    return await DatabaseService.getAllMealDates();
   } catch (error) {
     console.error('Error getting meal dates:', error);
-    return [];
+    throw error;
   }
 }
 
 /**
- * Save user settings
+ * Save user settings (debounced)
+ * This function debounces saves to prevent excessive network requests
  */
 export async function saveSettings(settings: UserSettings): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Clear existing timer
+    if (saveSettingsTimer) {
+      clearTimeout(saveSettingsTimer);
+    }
+
+    // Set new timer
+    saveSettingsTimer = setTimeout(async () => {
+      try {
+        await DatabaseService.saveSettings(settings);
+        resolve();
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        reject(error);
+      }
+    }, DEBOUNCE_DELAY);
+  });
+}
+
+/**
+ * Save settings immediately (bypass debounce)
+ * Use this when you need to force an immediate save
+ */
+export async function saveSettingsImmediate(settings: UserSettings): Promise<void> {
+  // Clear any pending debounced save
+  if (saveSettingsTimer) {
+    clearTimeout(saveSettingsTimer);
+    saveSettingsTimer = null;
+  }
+
   try {
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.USER_SETTINGS,
-      JSON.stringify(settings)
-    );
+    await DatabaseService.saveSettings(settings);
   } catch (error) {
-    console.error('Error saving settings:', error);
-    throw new Error('Failed to save settings to storage');
+    console.error('Error saving settings immediately:', error);
+    throw error;
   }
 }
 
@@ -129,16 +150,10 @@ export async function saveSettings(settings: UserSettings): Promise<void> {
  */
 export async function loadSettings(): Promise<UserSettings | null> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_SETTINGS);
-
-    if (!data) {
-      return null;
-    }
-
-    return JSON.parse(data);
+    return await DatabaseService.loadSettings();
   } catch (error) {
     console.error('Error loading settings:', error);
-    return null;
+    throw error;
   }
 }
 
@@ -147,10 +162,10 @@ export async function loadSettings(): Promise<UserSettings | null> {
  */
 export async function clearAllData(): Promise<void> {
   try {
-    await AsyncStorage.clear();
+    await DatabaseService.clearAllData();
   } catch (error) {
     console.error('Error clearing all data:', error);
-    throw new Error('Failed to clear storage');
+    throw error;
   }
 }
 
@@ -160,52 +175,25 @@ export async function clearAllData(): Promise<void> {
 export async function getStorageStats(): Promise<{
   totalMealDays: number;
   lastSync: Date | null;
-  storageKeys: string[];
+  deviceId: string;
 }> {
   try {
-    const keys = await AsyncStorage.getAllKeys();
-    const mealDates = await getAllMealDates();
-    const lastSyncStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_SYNC);
-
-    return {
-      totalMealDays: mealDates.length,
-      lastSync: lastSyncStr ? new Date(lastSyncStr) : null,
-      storageKeys: [...keys],
-    };
+    return await DatabaseService.getStorageStats();
   } catch (error) {
     console.error('Error getting storage stats:', error);
-    return {
-      totalMealDays: 0,
-      lastSync: null,
-      storageKeys: [],
-    };
+    throw error;
   }
 }
 
 /**
  * Delete old meal data (keep only recent days)
  */
-export async function cleanupOldMeals(daysToKeep: number = 90): Promise<number> {
+export async function cleanupOldMeals(daysToKeep: number = 90): Promise<void> {
   try {
-    const allDates = await getAllMealDates();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    const cutoffString = formatDateKey(cutoffDate);
-
-    let deletedCount = 0;
-
-    for (const dateString of allDates) {
-      if (dateString < cutoffString) {
-        const key = `${STORAGE_KEYS.MEALS_PREFIX}${dateString}`;
-        await AsyncStorage.removeItem(key);
-        deletedCount++;
-      }
-    }
-
-    return deletedCount;
+    await DatabaseService.cleanupOldMeals(daysToKeep);
   } catch (error) {
     console.error('Error cleaning up old meals:', error);
-    return 0;
+    throw error;
   }
 }
 
@@ -214,20 +202,10 @@ export async function cleanupOldMeals(daysToKeep: number = 90): Promise<number> 
  */
 export async function exportAllData(): Promise<string> {
   try {
-    const keys = await AsyncStorage.getAllKeys();
-    const items = await AsyncStorage.multiGet(keys);
-
-    const data: Record<string, any> = {};
-    items.forEach(([key, value]) => {
-      if (value) {
-        data[key] = JSON.parse(value);
-      }
-    });
-
-    return JSON.stringify(data, null, 2);
+    return await DatabaseService.exportAllData();
   } catch (error) {
     console.error('Error exporting data:', error);
-    throw new Error('Failed to export data');
+    throw error;
   }
 }
 
@@ -236,15 +214,9 @@ export async function exportAllData(): Promise<string> {
  */
 export async function importAllData(jsonData: string): Promise<void> {
   try {
-    const data = JSON.parse(jsonData);
-    const entries: [string, string][] = Object.entries(data).map(([key, value]) => [
-      key,
-      JSON.stringify(value),
-    ]);
-
-    await AsyncStorage.multiSet(entries);
+    await DatabaseService.importAllData(jsonData);
   } catch (error) {
     console.error('Error importing data:', error);
-    throw new Error('Failed to import data');
+    throw error;
   }
 }
