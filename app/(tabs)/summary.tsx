@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS, MACRO_EMOJIS } from '@/constants/mockData';
 import { CircularProgress } from '@/components/CircularProgress';
+import { CircularSettingsButton } from '@/components/CircularSettingsButton';
 import { MealEntryCard } from '@/components/MealEntryCard';
 
 export default function SummaryScreen() {
@@ -36,7 +37,7 @@ export default function SummaryScreen() {
       target: state.settings.targetProtein,
       unit: 'g',
       percentage: proteinPercentage,
-      color: '#FF6B6B', // Red
+      color: '#667EEA', // Purple-blue
     },
     {
       emoji: MACRO_EMOJIS.carbs,
@@ -45,7 +46,7 @@ export default function SummaryScreen() {
       target: state.settings.targetCarbs,
       unit: 'g',
       percentage: carbsPercentage,
-      color: '#34C759', // Apple green
+      color: '#5DADE2', // Light blue
     },
     {
       emoji: MACRO_EMOJIS.fat,
@@ -54,15 +55,18 @@ export default function SummaryScreen() {
       target: state.settings.targetFat,
       unit: 'g',
       percentage: fatPercentage,
-      color: '#FFD60A', // Apple yellow
+      color: '#4A90E2', // Medium blue
     },
   ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <Text style={[styles.header, { color: colors.text }]}>Daily Summary</Text>
+        {/* Header with Settings Button */}
+        <View style={styles.headerRow}>
+          <Text style={[styles.header, { color: colors.text }]}>Daily Summary</Text>
+          <CircularSettingsButton />
+        </View>
 
         {/* Date */}
         <Text style={[styles.date, { color: colors.textSecondary }]}>
@@ -178,12 +182,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   header: {
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 8,
     letterSpacing: -0.3,
   },
   date: {

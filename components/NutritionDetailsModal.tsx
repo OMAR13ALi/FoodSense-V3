@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     borderWidth: 0,
-    backgroundColor: '#F5F5DC',
+    backgroundColor: '#EBF5FB',
   },
   editButtonText: {
     fontSize: 16,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    shadowColor: '#FFD60A',
+    shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   editRow: {
     flexDirection: 'row',

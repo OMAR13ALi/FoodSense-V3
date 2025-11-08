@@ -49,10 +49,6 @@ export const CalorieProgressBar: React.FC<CalorieProgressBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 20,
     paddingVertical: 16,
     paddingBottom: 20,

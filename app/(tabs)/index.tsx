@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +19,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS } from '@/constants/mockData';
 import { CalorieProgressBar } from '@/components/CalorieProgressBar';
+import { CircularSettingsButton } from '@/components/CircularSettingsButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { NutritionDetailsModal } from '@/components/NutritionDetailsModal';
 import { MealEntry } from '@/types';
@@ -218,9 +220,7 @@ export default function DashboardScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
-  const navigateToSettings = () => {
-    router.push('/(tabs)/settings');
-  };
+
 
   const handleCalorieTap = (lineIndex: number) => {
     const lineData = lineCalories[lineIndex];
@@ -269,71 +269,77 @@ export default function DashboardScreen() {
         {/* Top Bar */}
         <View style={styles.topBar}>
           <Text style={[styles.todayText, { color: colors.text }]}>Today</Text>
-          <Pressable onPress={navigateToSettings} style={styles.iconButton}>
-            <IconSymbol name="gearshape.fill" size={24} color={colors.text} />
-          </Pressable>
+          <CircularSettingsButton />
         </View>
 
-        {/* Full Screen Text Editor */}
-        <View style={styles.editorContainer}>
-          <TextInput
-            ref={textInputRef}
-            style={[
-              styles.textEditor,
-              {
-                backgroundColor: colors.background,
-                color: colors.text,
-              },
-            ]}
-            multiline
-            placeholder=""
-            placeholderTextColor={colors.placeholder}
-            value={text}
-            onChangeText={setText}
-            onSelectionChange={handleSelectionChange}
-            autoFocus
-            textAlignVertical="top"
-          />
+        {/* Scrollable Content Area */}
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Text Editor */}
+          <View style={styles.editorContainer}>
+            <TextInput
+              ref={textInputRef}
+              style={[
+                styles.textEditor,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                },
+              ]}
+              multiline
+              placeholder=""
+              placeholderTextColor={colors.placeholder}
+              value={text}
+              onChangeText={setText}
+              onSelectionChange={handleSelectionChange}
+              autoFocus
+              textAlignVertical="top"
+            />
 
-          {/* Inline Calorie Overlays */}
-          <View style={styles.calorieOverlay}>
-            {lines.map((line, index) => {
-              const lineData = lineCalories[index];
-              if (!line.trim() || !lineData) return null;
+            {/* Inline Calorie Overlays */}
+            <View style={styles.calorieOverlay}>
+              {lines.map((line, index) => {
+                const lineData = lineCalories[index];
+                if (!line.trim() || !lineData) return null;
 
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.calorieLineContainer,
-                    { top: index * 22 + 16 }, // 22 is line height, 16 is top padding
-                  ]}
-                  pointerEvents={lineData.status === 'done' ? 'auto' : 'none'}
-                >
-                  {lineData.status === 'calculating' && (
-                    <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
-                      calculating...
-                    </Text>
-                  )}
-                  {lineData.status === 'sources' && (
-                    <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
-                      sources
-                    </Text>
-                  )}
-                  {lineData.status === 'done' && (
-                    <Pressable onPress={() => handleCalorieTap(index)}>
-                      <Text style={[styles.calorieText, { color: colors.caloriePositive }]}>
-                        + {lineData.calories} cal {lineData.sources && lineData.sources.length > 0 ? getSourceIcon(lineData.sources[0]) : ''}
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.calorieLineContainer,
+                      { top: index * 22 + 16 }, // 22 is line height, 16 is top padding
+                    ]}
+                    pointerEvents={lineData.status === 'done' ? 'auto' : 'none'}
+                  >
+                    {lineData.status === 'calculating' && (
+                      <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
+                        calculating...
                       </Text>
-                    </Pressable>
-                  )}
-                </View>
-              );
-            })}
+                    )}
+                    {lineData.status === 'sources' && (
+                      <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
+                        sources
+                      </Text>
+                    )}
+                    {lineData.status === 'done' && (
+                      <Pressable onPress={() => handleCalorieTap(index)}>
+                        <Text style={[styles.calorieText, { color: colors.caloriePositive }]}>
+                          + {lineData.calories} cal {lineData.sources && lineData.sources.length > 0 ? getSourceIcon(lineData.sources[0]) : ''}
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        </ScrollView>
 
-        {/* Bottom Calorie Progress Bar */}
+        {/* Bottom Calorie Progress Bar - fixed at bottom */}
         <CalorieProgressBar
           consumed={state.totalCalories}
           goal={state.settings.dailyCalorieGoal}
@@ -371,15 +377,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
   },
-  iconButton: {
-    padding: 4,
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 110,
   },
   editorContainer: {
-    flex: 1,
+    minHeight: 400,
     position: 'relative',
+    paddingBottom: 16,
   },
   textEditor: {
-    flex: 1,
+    minHeight: 400,
     paddingHorizontal: 20,
     paddingVertical: 16,
     fontSize: 17,

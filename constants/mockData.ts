@@ -59,36 +59,48 @@ export const MACRO_EMOJIS = {
 // Loading state emojis for search animation
 export const LOADING_EMOJIS = ['🔍', '🤔', '💭', '🧠', '✨'];
 
-// Color palette - Apple Notes inspired design
+// Color palette - Blue gradient modern design
 export const COLORS = {
   light: {
-    background: '#FDFCF9',        // Warm off-white (main screen)
+    background: '#F7FAFC',        // Very light blue-gray
     cardBackground: '#FFFFFF',     // Pure white cards
-    primary: '#FFD60A',           // Apple yellow
-    secondary: '#F5F5DC',         // Warm beige
+    primary: '#4A90E2',           // Main blue
+    primaryStart: '#4A90E2',      // Medium blue (gradient start)
+    primaryEnd: '#357ABD',        // Deeper blue (gradient end)
+    accentStart: '#5DADE2',       // Light cyan-blue (gradient start)
+    accentEnd: '#3498DB',         // Bright blue (gradient end)
+    secondary: '#EBF5FB',         // Very light blue tint
     text: '#1C1C1E',              // Apple dark gray
     textSecondary: '#8E8E93',     // Apple medium gray
     border: '#E5E5EA',            // Apple light gray
     success: '#34C759',           // Apple green
     warning: '#FF9500',           // Apple orange
     error: '#FF3B30',             // Apple red
-    caloriePositive: '#FF9500',   // Orange for calories
-    shadow: 'rgba(0, 0, 0, 0.04)', // Very subtle shadows
+    caloriePositive: '#5DADE2',   // Light blue for calories
+    progressGradientStart: '#667EEA', // Purple-blue
+    progressGradientEnd: '#764BA2',   // Deep purple
+    shadow: 'rgba(74, 144, 226, 0.08)', // Blue-tinted shadow
     placeholder: '#C7C7CC',       // Apple placeholder gray
   },
   dark: {
     background: '#000000',        // True black (Apple style)
     cardBackground: '#1C1C1E',    // Dark gray cards
-    primary: '#FFD60A',           // Apple yellow
-    secondary: '#2C2C2E',         // Dark gray
+    primary: '#5DADE2',           // Light blue
+    primaryStart: '#5DADE2',      // Light cyan-blue (gradient start)
+    primaryEnd: '#4A90E2',        // Medium blue (gradient end)
+    accentStart: '#3498DB',       // Bright blue (gradient start)
+    accentEnd: '#2E7BB7',         // Darker blue (gradient end)
+    secondary: '#1A2332',         // Dark blue-gray
     text: '#FFFFFF',              // White text
     textSecondary: '#98989D',     // Medium gray
     border: '#38383A',            // Dark border
     success: '#30D158',           // Apple green (dark)
     warning: '#FF9F0A',           // Apple orange (dark)
     error: '#FF453A',             // Apple red (dark)
-    caloriePositive: '#FF9F0A',   // Orange for calories
-    shadow: 'rgba(0, 0, 0, 0.3)', // Darker shadows
+    caloriePositive: '#5DADE2',   // Light blue for calories
+    progressGradientStart: '#667EEA',
+    progressGradientEnd: '#764BA2',
+    shadow: 'rgba(93, 173, 226, 0.15)', // Blue-tinted shadow
     placeholder: '#48484A',       // Dark placeholder
   },
 };
