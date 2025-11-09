@@ -97,6 +97,8 @@ export async function analyzeNutrition(
     if (config.debugMode) {
       console.log('Static cache hit for:', mealText);
     }
+    // Add smooth UX delay for cached results to show animation
+    await new Promise(resolve => setTimeout(resolve, 350));
     return cachedResult;
   }
 
@@ -106,6 +108,8 @@ export async function analyzeNutrition(
     if (config.debugMode) {
       console.log('API cache hit for:', mealText);
     }
+    // Add smooth UX delay for cached results to show animation
+    await new Promise(resolve => setTimeout(resolve, 350));
     return apiCachedResult;
   }
 

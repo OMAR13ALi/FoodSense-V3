@@ -4,21 +4,35 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { MealEntry } from '@/types';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/useTheme';
 import { COLORS } from '@/constants/mockData';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 interface MealEntryCardProps {
   meal: MealEntry;
   onPress?: () => void;
   onLongPress?: () => void;
+  onDelete?: () => void;
 }
 
-export const MealEntryCard: React.FC<MealEntryCardProps> = ({ meal, onPress, onLongPress }) => {
-  const colorScheme = useColorScheme();
-  const colors = COLORS[colorScheme ?? 'light'];
+export const MealEntryCard: React.FC<MealEntryCardProps> = ({ meal, onPress, onLongPress, onDelete }) => {
+  const colorScheme = useTheme();
+  const colors = COLORS[colorScheme];
 
-  return (
+  // Render delete button on right swipe
+  const renderRightActions = () => (
+    <Pressable
+      onPress={onDelete}
+      style={[styles.deleteButton, { backgroundColor: colors.error }]}
+    >
+      <IconSymbol name="trash" size={24} color="#fff" />
+      <Text style={styles.deleteText}>Delete</Text>
+    </Pressable>
+  );
+
+  const cardContent = (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
@@ -43,6 +57,21 @@ export const MealEntryCard: React.FC<MealEntryCardProps> = ({ meal, onPress, onL
       </View>
     </Pressable>
   );
+
+  // Only wrap in Swipeable if onDelete is provided
+  if (onDelete) {
+    return (
+      <Swipeable
+        renderRightActions={renderRightActions}
+        overshootRight={false}
+        friction={2}
+      >
+        {cardContent}
+      </Swipeable>
+    );
+  }
+
+  return cardContent;
 };
 
 const styles = StyleSheet.create({
@@ -73,5 +102,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     letterSpacing: -0.24,
+  },
+  deleteButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginLeft: 8,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+  deleteText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 4,
   },
 });

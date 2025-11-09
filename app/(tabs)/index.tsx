@@ -17,16 +17,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/useTheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS } from '@/constants/mockData';
 import { CalorieProgressBar } from '@/components/CalorieProgressBar';
 import { CircularSettingsButton } from '@/components/CircularSettingsButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { NutritionDetailsModal } from '@/components/NutritionDetailsModal';
-import { MealEntry } from '@/types';
+import { AnimatedCalorieText } from '@/components/AnimatedCalorieText';
+import { MealEntry, CalorieAnimationStatus } from '@/types';
 import { analyzeNutrition } from '@/services/ai-service';
-import { getSourceIcon } from '@/components/SourceIcon';
 
 interface LineCalories {
   [lineIndex: number]: {
@@ -37,13 +37,13 @@ interface LineCalories {
     fat: number;
     mealId: string;
     sources?: string[]; // Track sources for inline icon display
-    status: 'idle' | 'calculating' | 'sources' | 'done';
+    status: CalorieAnimationStatus;
   };
 }
 
 export default function DashboardScreen() {
-  const colorScheme = useColorScheme();
-  const colors = COLORS[colorScheme ?? 'light'];
+  const colorScheme = useTheme();
+  const colors = COLORS[colorScheme];
   const router = useRouter();
 
   const { state, addMeal, updateMeal, isLoading, error, clearError } = useApp();
@@ -99,7 +99,7 @@ export default function DashboardScreen() {
 
       // Start debounce timer for this line
       debounceTimerRef.current[index] = setTimeout(async () => {
-        // Start calculation
+        // Start calculation - fade in "calculating..."
         setLineCalories(prev => ({
           ...prev,
           [index]: {
@@ -113,24 +113,51 @@ export default function DashboardScreen() {
           },
         }));
 
-        // Show "sources" status (store reference to clear it later)
-        let sourcesTimeoutId: ReturnType<typeof setTimeout> | undefined;
+        // Track start time for minimum display duration
+        const startTime = Date.now();
 
         try {
-          sourcesTimeoutId = setTimeout(() => {
+          // Show "sources" status after 350ms (ALWAYS HAPPENS - not cancelled)
+          setTimeout(() => {
+            console.log(`[index.tsx] Line ${index}: Status → 'sources' (empty array initially)`);
             setLineCalories(prev => ({
               ...prev,
-              [index]: { ...prev[index], status: 'sources' },
+              [index]: {
+                ...prev[index],
+                status: 'sources',
+                sources: [], // Will be updated when result arrives
+              },
             }));
-          }, 300);
+          }, 350);
 
           // Call real AI API
           const result = await analyzeNutrition(trimmedLine);
 
-          // Clear the sources timeout since we got a result
-          if (sourcesTimeoutId) {
-            clearTimeout(sourcesTimeoutId);
+          // Calculate elapsed time
+          const elapsed = Date.now() - startTime;
+          
+          // Ensure sources phase shows for minimum 800ms total
+          // (350ms to reach sources + 450ms for circle animations)
+          const MIN_SOURCES_DISPLAY = 800;
+          const remainingTime = Math.max(0, MIN_SOURCES_DISPLAY - elapsed);
+          
+          // Wait if needed to ensure circles are visible
+          if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
           }
+
+          // Update sources data while still in sources phase
+          console.log(`[index.tsx] Line ${index}: Updating sources →`, result.sources);
+          setLineCalories(prev => ({
+            ...prev,
+            [index]: {
+              ...prev[index],
+              sources: result.sources,
+            },
+          }));
+
+          // Small delay to let circles fully appear with stagger
+          await new Promise(resolve => setTimeout(resolve, 100));
 
           // Check if this line already has a meal (editing case)
           const existingMealId = lineCalories[index]?.mealId;
@@ -163,6 +190,7 @@ export default function DashboardScreen() {
             });
           }
 
+          console.log(`[index.tsx] Line ${index}: Status → 'done' (${result.calories} cal)`);
           setLineCalories(prev => ({
             ...prev,
             [index]: {
@@ -179,9 +207,14 @@ export default function DashboardScreen() {
         } catch (error: any) {
           console.error('AI analysis error:', error);
 
-          // Clear the sources timeout in case of error
-          if (sourcesTimeoutId) {
-            clearTimeout(sourcesTimeoutId);
+          // Calculate elapsed time for error case too
+          const elapsed = Date.now() - startTime;
+          const MIN_SOURCES_DISPLAY = 800;
+          const remainingTime = Math.max(0, MIN_SOURCES_DISPLAY - elapsed);
+          
+          // Wait to show sources phase even on error
+          if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
           }
 
           // Check if this line already has a meal (editing case)
@@ -340,23 +373,14 @@ export default function DashboardScreen() {
                     ]}
                     pointerEvents={lineData.status === 'done' ? 'auto' : 'none'}
                   >
-                    {lineData.status === 'calculating' && (
-                      <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
-                        calculating...
-                      </Text>
-                    )}
-                    {lineData.status === 'sources' && (
-                      <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
-                        sources
-                      </Text>
-                    )}
-                    {lineData.status === 'done' && (
-                      <Pressable onPress={() => handleCalorieTap(index)}>
-                        <Text style={[styles.calorieText, { color: colors.caloriePositive }]}>
-                          + {lineData.calories} cal {lineData.sources && lineData.sources.length > 0 ? getSourceIcon(lineData.sources[0]) : ''}
-                        </Text>
-                      </Pressable>
-                    )}
+                    <AnimatedCalorieText
+                      status={lineData.status}
+                      calories={lineData.calories}
+                      sources={lineData.sources}
+                      textSecondaryColor={colors.textSecondary}
+                      caloriePositiveColor={colors.caloriePositive}
+                      onPress={lineData.status === 'done' ? () => handleCalorieTap(index) : undefined}
+                    />
                   </View>
                 );
               })}

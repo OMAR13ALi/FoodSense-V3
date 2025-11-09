@@ -17,6 +17,11 @@ interface SourceIconProps {
 export function getSourceIcon(source: string): string {
   const lowerSource = source.toLowerCase();
 
+  // Loading placeholder
+  if (lowerSource.includes('loading')) {
+    return '⏳';
+  }
+
   // USDA sources
   if (lowerSource.includes('usda') || lowerSource.includes('fooddata')) {
     return '🇺🇸';

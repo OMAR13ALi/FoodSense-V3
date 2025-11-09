@@ -16,6 +16,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ text = 'sear
   const colors = COLORS[colorScheme ?? 'light'];
 
   const [emojiIndex, setEmojiIndex] = useState(0);
+  const [dotCount, setDotCount] = useState(0);
   const [fadeAnim] = useState(new Animated.Value(1));
 
   useEffect(() => {

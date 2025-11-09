@@ -1,11 +1,21 @@
 /**
  * CalorieProgressBar - Bottom floating bar showing calorie progress
+ * Uses Reanimated for smooth 60 FPS number transitions
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  withSpring,
+  interpolate,
+} from 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { COLORS } from '@/constants/mockData';
+
+// Create Animated Text component
+const AnimatedText = Animated.createAnimatedComponent(Text);
 
 interface CalorieProgressBarProps {
   consumed: number;
@@ -21,7 +31,31 @@ export const CalorieProgressBar: React.FC<CalorieProgressBarProps> = ({
   const colorScheme = useColorScheme();
   const colors = COLORS[colorScheme ?? 'light'];
 
-  const remaining = goal - consumed;
+  // Animated values for smooth transitions
+  const animatedConsumed = useSharedValue(consumed);
+  const animatedRemaining = useSharedValue(goal - consumed);
+
+  // Update animated values when props change
+  useEffect(() => {
+    animatedConsumed.value = withSpring(consumed, {
+      damping: 15,
+      stiffness: 100,
+      mass: 0.5,
+    });
+    animatedRemaining.value = withSpring(goal - consumed, {
+      damping: 15,
+      stiffness: 100,
+      mass: 0.5,
+    });
+  }, [consumed, goal, animatedConsumed, animatedRemaining]);
+
+  // Animated props for the calorie text
+  const animatedProps = useAnimatedProps(() => {
+    const remaining = Math.round(animatedRemaining.value);
+    return {
+      text: `${remaining.toLocaleString()} cal`,
+    } as any;
+  });
 
   return (
     <Pressable
@@ -39,9 +73,10 @@ export const CalorieProgressBar: React.FC<CalorieProgressBarProps> = ({
         <Text style={[styles.labelText, { color: colors.textSecondary }]}>
           Remaining
         </Text>
-        <Text style={[styles.calorieText, { color: colors.text }]}>
-          {remaining.toLocaleString()} cal
-        </Text>
+        <AnimatedText
+          style={[styles.calorieText, { color: colors.text }]}
+          animatedProps={animatedProps}
+        />
       </View>
     </Pressable>
   );

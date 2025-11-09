@@ -1,11 +1,19 @@
 import { MealEntry, UserSettings } from '../types';
 import { getDeviceId } from './device-id-service';
-import { supabase } from './supabase-client';
+import { supabase, Database } from './supabase-client';
 
 /**
  * Database Service
  * Handles all Supabase database operations for meals and settings
  */
+
+// =====================================================
+// TYPE DEFINITIONS
+// =====================================================
+
+// Database record types
+type DbMeal = Database['public']['Tables']['meals']['Row'];
+type DbUserSettings = Database['public']['Tables']['user_settings']['Row'];
 
 // =====================================================
 // HELPER FUNCTIONS
@@ -33,7 +41,7 @@ function mealToDbFormat(meal: MealEntry, deviceId: string) {
 /**
  * Convert meal from database format to app format
  */
-function mealFromDbFormat(dbMeal: any): MealEntry {
+function mealFromDbFormat(dbMeal: DbMeal): MealEntry {
   return {
     id: dbMeal.id,
     text: dbMeal.text,
@@ -67,7 +75,7 @@ function settingsToDbFormat(settings: UserSettings, deviceId: string) {
 /**
  * Convert settings from database format to app format
  */
-function settingsFromDbFormat(dbSettings: any): UserSettings {
+function settingsFromDbFormat(dbSettings: DbUserSettings): UserSettings {
   return {
     dailyCalorieGoal: Number(dbSettings.daily_calorie_goal),
     targetProtein: Number(dbSettings.target_protein),

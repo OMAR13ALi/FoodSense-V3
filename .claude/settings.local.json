@@ -10,13 +10,18 @@
       "Bash(dir:*)",
       "WebFetch(domain:docs.perplexity.ai)",
       "Bash(curl:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:docs.swmansion.com)",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__list_tables",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

@@ -3,10 +3,10 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/useTheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS, MACRO_EMOJIS } from '@/constants/mockData';
 import { CircularProgress } from '@/components/CircularProgress';
@@ -14,10 +14,10 @@ import { CircularSettingsButton } from '@/components/CircularSettingsButton';
 import { MealEntryCard } from '@/components/MealEntryCard';
 
 export default function SummaryScreen() {
-  const colorScheme = useColorScheme();
-  const colors = COLORS[colorScheme ?? 'light'];
+  const colorScheme = useTheme();
+  const colors = COLORS[colorScheme];
 
-  const { state, isLoading, error, clearError } = useApp();
+  const { state, isLoading, error, clearError, deleteMeal } = useApp();
 
   // Show toast notification when error occurs
   useEffect(() => {
@@ -32,6 +32,33 @@ export default function SummaryScreen() {
       });
     }
   }, [error, clearError]);
+
+  // Handle meal deletion with confirmation
+  const handleDeleteMeal = (mealId: string, mealText: string) => {
+    Alert.alert(
+      'Delete Meal',
+      `Remove "${mealText}"?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteMeal(mealId);
+            Toast.show({
+              type: 'success',
+              text1: 'Meal deleted',
+              position: 'bottom',
+              visibilityTime: 2000,
+            });
+          },
+        },
+      ]
+    );
+  };
 
   // Calculate macro percentages
   const proteinPercentage = state.settings.targetProtein > 0
@@ -186,7 +213,13 @@ export default function SummaryScreen() {
           </Text>
 
           {state.meals.length > 0 ? (
-            state.meals.map((meal) => <MealEntryCard key={meal.id} meal={meal} />)
+            state.meals.map((meal) => (
+              <MealEntryCard
+                key={meal.id}
+                meal={meal}
+                onDelete={() => handleDeleteMeal(meal.id, meal.text)}
+              />
+            ))
           ) : (
             <View style={[styles.emptyCard, { backgroundColor: colors.cardBackground }]}>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>

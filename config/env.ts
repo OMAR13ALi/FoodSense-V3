@@ -28,7 +28,7 @@ interface EnvConfig {
 
 // TEMPORARY: Hardcode API keys for testing
  const TEMP_OPENROUTER_KEY = 'api-key';
-const TEMP_PERPLEXITY_KEY = 'model-key';
+ const TEMP_PERPLEXITY_KEY = 'model-key';
 
 
 // Get environment variables from expo-constants

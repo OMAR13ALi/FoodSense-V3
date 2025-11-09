@@ -14,15 +14,15 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/useTheme';
 import { useApp } from '@/contexts/AppContext';
 import { COLORS, MACRO_EMOJIS } from '@/constants/mockData';
 import { SettingsRow } from '@/components/SettingsRow';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
-  const colors = COLORS[colorScheme ?? 'light'];
+  const colorScheme = useTheme();
+  const colors = COLORS[colorScheme];
 
   const { state, updateSettings } = useApp();
   const [editingGoal, setEditingGoal] = useState<{
@@ -107,26 +107,6 @@ export default function SettingsScreen() {
         {/* Preferences Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PREFERENCES</Text>
-
-          <SettingsRow
-            label="Meal Reminders"
-            rightComponent={
-              <ToggleSwitch
-                value={state.settings.mealReminders}
-                onValueChange={(value) => updateSettings({ mealReminders: value })}
-              />
-            }
-          />
-
-          <SettingsRow
-            label="Track Water Intake"
-            rightComponent={
-              <ToggleSwitch
-                value={state.settings.trackWater}
-                onValueChange={(value) => updateSettings({ trackWater: value })}
-              />
-            }
-          />
 
           <SettingsRow
             label="Dark Mode"

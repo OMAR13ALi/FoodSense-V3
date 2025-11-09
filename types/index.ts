@@ -76,3 +76,6 @@ export interface APIError {
   code?: string;
   retryable: boolean;
 }
+
+// Calorie Animation Status Type
+export type CalorieAnimationStatus = 'idle' | 'calculating' | 'sources' | 'animating' | 'done';

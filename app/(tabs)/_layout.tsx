@@ -66,7 +66,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          href: null, // Hide from tab bar
+          title: 'History',
+          tabBarIcon: ({ color }) => <IconSymbol size={32} name="calendar" color={color} />,
         }}
       />
     </Tabs>
